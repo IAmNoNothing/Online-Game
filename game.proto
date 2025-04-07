@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+service Game {
+    rpc Join(JoinRequest) returns (JoinResponse);
+    rpc Leave(LeaveRequest) returns (LeaveResponse);
+    rpc Update(UpdateRequest) returns (UpdateResponse);
+    rpc Shoot(ShootRequest) returns (ShootResponse);
+}
+
+message JoinRequest {
+    string player_id = 1;
+}
+
+message JoinResponse {
+    bool success = 1;
+    string message = 2;
+    Map map = 3;
+}
+
+message LeaveRequest {
+    string player_id = 1;
+}
+
+message LeaveResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message UpdateRequest {
+    string client_id = 1;
+    Vec2 position = 2;
+    float direction = 3;
+}
+
+message Vec2 {
+    float x = 1;
+    float y = 2;
+}
+
+message PlayerState {
+    string client_id = 1;
+    Vec2 position = 2;
+    float direction = 3;
+}
+
+message Bullet {
+    string owner_id = 1;
+    int32 bullet_id = 2;
+    Vec2 position = 3;
+    Vec2 direction = 4;
+}
+
+message UpdateResponse {
+    repeated PlayerState states = 1;
+    repeated Bullet bullets = 2;
+}
+
+message ShootRequest {
+    string player_id = 1;
+}
+
+message ShootResponse {
+    bool success = 1;
+}
+
+message Color {
+    int8 r = 1;
+    int8 g = 2;
+    int8 b = 3;
+}
+
+message ColorMapEntry {
+    Color color = 1;
+    string identifier = 2;
+}
+
+message Map {
+    repeated ColorMapEntry color_map = 1;
+    repeated string map = 2;
+}
