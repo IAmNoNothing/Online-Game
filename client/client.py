@@ -21,6 +21,7 @@ def step(n, s):
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
+HOST = '35.156.54.176:51080'
 
 class Player:
     radius = 10
@@ -35,9 +36,8 @@ class Player:
         self.last_last_update = time.time()
         self.name_surface = GameClient.instance.font.render(self.name, False, (255, 255, 255))
         self.interpolation = 0
-        self.interpolate = False
+        self.interpolate = True
         self.interpolated_position = self.position.copy()
-        
         self.hp = 100
         self.main_player = False
         big_font = pg.font.Font('assets/Tiny5-Regular.ttf', 40)
@@ -257,6 +257,7 @@ class GameClient:
         self.must_shoot = False
         self.map = None
         self.text_map = None
+        self.debug_screen.set_value("Ping", "Disconnected")
 
     def run(self):
         self.running = True
@@ -275,7 +276,7 @@ class GameClient:
         pg.quit()
     
     def connect(self):
-        channel = grpc.insecure_channel('localhost:12345')
+        channel = grpc.insecure_channel(HOST)
         try:
             stub = game_pb2_grpc.GameStub(channel)
             request = game_pb2.JoinRequest(player_id=self.client_id)
@@ -304,12 +305,20 @@ class GameClient:
         if channel_stub is None:
             return
         channel, stub = channel_stub
+        last_time = time.time()
 
         while self.running:
-            time.sleep(1 / 60)
+            time.sleep(1 / 30)
             position = game_pb2.Vec2(x=self.player.position.x, y=self.player.position.y)
             request = game_pb2.UpdateRequest(client_id=self.client_id, position=position, direction=self.player.direction)
+            
+            last_time = time.time()
             response = stub.Update(request)
+            current_time = time.time()
+            ping = round((current_time - last_time) * 1000)
+            last_time = current_time
+            self.debug_screen.set_value('Ping', f"{ping} ms")
+
             player_states = response.states
             self.bullets.bullets = response.bullets
             self.process_player_states(player_states)

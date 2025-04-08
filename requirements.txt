@@ -1,0 +1,4 @@
+pygame
+grpcio
+grpcio-tools
+loguru
