@@ -54,6 +54,11 @@ class GameStub(object):
                 request_serializer=game__pb2.ShootRequest.SerializeToString,
                 response_deserializer=game__pb2.ShootResponse.FromString,
                 _registered_method=True)
+        self.GetMap = channel.unary_unary(
+                '/Game/GetMap',
+                request_serializer=game__pb2.GetMapRequest.SerializeToString,
+                response_deserializer=game__pb2.Map.FromString,
+                _registered_method=True)
 
 
 class GameServicer(object):
@@ -83,6 +88,12 @@ class GameServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetMap(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_GameServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -105,6 +116,11 @@ def add_GameServicer_to_server(servicer, server):
                     servicer.Shoot,
                     request_deserializer=game__pb2.ShootRequest.FromString,
                     response_serializer=game__pb2.ShootResponse.SerializeToString,
+            ),
+            'GetMap': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMap,
+                    request_deserializer=game__pb2.GetMapRequest.FromString,
+                    response_serializer=game__pb2.Map.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -215,6 +231,33 @@ class Game(object):
             '/Game/Shoot',
             game__pb2.ShootRequest.SerializeToString,
             game__pb2.ShootResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMap(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/Game/GetMap',
+            game__pb2.GetMapRequest.SerializeToString,
+            game__pb2.Map.FromString,
             options,
             channel_credentials,
             insecure,

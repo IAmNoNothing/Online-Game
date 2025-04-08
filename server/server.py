@@ -6,30 +6,25 @@ from loguru import logger
 import threading
 import time
 import math
+import json
+from Map import Map
+import pygame as pg
 
 
 RUNNING = True
 
 
-GAME_MAP = [
-    "   ",
-    " A ",
-    "   ",
-]
-
-COLORS_MAP = {
-    "A": game_pb2.Color(r=255, g=0, b=0),
-}
-
-
 class GameServicer(game_pb2_grpc.GameServicer):
     def __init__(self):
         self.players = {}
-        self.bullets = [game_pb2.Bullet(owner_id="1", position=game_pb2.Vec2(x=300, y=400), direction=game_pb2.Vec2(x=1, y=0))]
+        self.hps = {}
+        self.bullets = []
         self.update_thread = threading.Thread(target=self.update_loop)
         self.update_thread.start()
         self.bullet_id_counter = 0
         self.map_proto = self.create_map_proto_object()
+        self.text_map = self.map_proto.map
+        self.map = Map(self.map_proto)
 
     def Join(self, request, context):
         logger.info(f"Player {request.player_id} joined the game.")
@@ -45,6 +40,7 @@ class GameServicer(game_pb2_grpc.GameServicer):
             direction=0.0
         )
         self.players[request.player_id] = player_state
+        self.hps[request.player_id] = 100
         logger.info(f"Added player {request.player_id} to the game.")
 
     def Leave(self, request, context):
@@ -66,6 +62,7 @@ class GameServicer(game_pb2_grpc.GameServicer):
         player_state.position.x = request.position.x
         player_state.position.y = request.position.y
         player_state.direction = request.direction
+        player_state.hp = self.hps[request.client_id]
     
     def update_loop(self):
         global RUNNING
@@ -84,10 +81,47 @@ class GameServicer(game_pb2_grpc.GameServicer):
         for bullet in self.bullets:
             bullet.position.x += bullet.direction.x * bullet_speed * dt
             bullet.position.y += bullet.direction.y * bullet_speed * dt
-            if not self.in_bounds(bullet.position):
+            if not self.in_bounds(bullet.position) or self.inside_wall(bullet.position):
                 self.bullets.remove(bullet)
+            collides, who = self.collides_with_players(bullet)
+            if collides:
+                self.hps[who.client_id] -= 10
+                self.bullets.remove(bullet)
+
+    def collides_with_players(self, bullet):
+        for player in self.players.values():
+            if player.client_id == bullet.owner_id:
+                continue
+            if self.hps[player.client_id] <= 0:
+                continue
+            player_collider = pg.Rect(
+                player.position.x - 10, 
+                player.position.y - 10, 
+                20,
+                20
+            )
+            if player_collider.collidepoint(bullet.position.x, bullet.position.y):
+                return True, player
+        return False, None
+
     
-    def in_bounds(self, position): # too bad
+    def inside_wall(self, position):        
+        ppb = self.map.pixels_per_block
+        map_top_left = self.map.rect.topleft
+
+        for y, row in enumerate(self.text_map):
+            for x, cell in enumerate(row):
+                if cell == ' ':
+                    continue
+
+                cell_rect = pg.Rect(x * ppb + map_top_left[0], y * ppb + map_top_left[1], ppb, ppb)
+                if cell_rect.collidepoint(position.x, position.y):
+                    return True
+        
+        return False
+
+
+    def in_bounds(self, position): # too bad, will break if client's map size changes
         return 0 <= position.x <= 800 and 0 <= position.y <= 600
 
     def Shoot(self, request, context):
@@ -107,10 +141,21 @@ class GameServicer(game_pb2_grpc.GameServicer):
 
         self.bullets.append(bullet)
         return game_pb2.ShootResponse(success=True)
-    
-    def create_map_proto_object(self):
-        color_map = [game_pb2.ColorMapEntry(color=color, identifier=identifier) for identifier, color in COLORS_MAP.items()]
-        map_proto = game_pb2.Map(color_map=color_map, map=GAME_MAP)
+
+    def create_map_proto_object(self, map_name='map.json'):
+        with open(map_name, 'r') as f:
+            map_file = json.load(f)
+        if 'map' not in map_file or 'colors' not in map_file:
+            logger.error("Incorrect map format!")   
+            return None
+        color_map = [
+            game_pb2.ColorMapEntry(
+                color=game_pb2.Color(r=color[0], g=color[1], b=color[2]), 
+                identifier=identifier
+            )
+            for identifier, color in map_file['colors'].items()
+        ]
+        map_proto = game_pb2.Map(color_map=color_map, map=map_file['map'])
         return map_proto
 
 def handle_console(server, servicer):
@@ -134,6 +179,9 @@ def handle_console(server, servicer):
                 continue
             logger.info(f"Kicked player {player_id}.")
             del servicer.players[player_id]
+        elif command == 'reloadmap':
+            servicer.map_proto = servicer.create_map_proto_object()
+            logger.info("Map reloaded!")
         else:
             logger.error(f"Unknown command: {command}")
 

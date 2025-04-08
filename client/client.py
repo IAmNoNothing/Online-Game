@@ -7,6 +7,7 @@ import time
 from loguru import logger
 import math
 from client.debugscreen import DebugScreen
+from Map import Map
 
 
 def lerp(a, b, t):
@@ -34,8 +35,13 @@ class Player:
         self.last_last_update = time.time()
         self.name_surface = GameClient.instance.font.render(self.name, False, (255, 255, 255))
         self.interpolation = 0
-        self.interpolate = True
+        self.interpolate = False
         self.interpolated_position = self.position.copy()
+        
+        self.hp = 100
+        self.main_player = False
+        big_font = pg.font.Font('assets/Tiny5-Regular.ttf', 40)
+        self.gameover = big_font.render("You are dead!", False, (255, 100, 100))
 
     def update_pos_and_dir(self, position, direction):
         self.last_position = self.position.copy()
@@ -46,6 +52,9 @@ class Player:
         self.last_update = time.time()
 
     def move(self, dt):
+        if self.dead():
+            return
+        
         keys = pg.key.get_pressed()
         movement = pg.Vector2(0, 0)
 
@@ -62,11 +71,76 @@ class Player:
         if movement.length_squared() > 0:
             movement = movement.normalize()
 
-        self.position.x += movement.x * self.speed * dt
-        self.position.y += movement.y * self.speed * dt
+        position = self.position.copy()
+        position.x += movement.x * self.speed * dt
+        position.y += movement.y * self.speed * dt
 
-        self.position.x = clamp(self.position.x, self.radius, GameClient.instance.w - self.radius)
-        self.position.y = clamp(self.position.y, self.radius, GameClient.instance.h - self.radius)
+        position.x = clamp(position.x, self.radius, GameClient.instance.w - self.radius)
+        position.y = clamp(position.y, self.radius, GameClient.instance.h - self.radius)
+
+        collides, where = self.collides_with_map(position)
+        if not collides:
+            self.position = position
+        
+        # match where:
+        #     case 'up':
+        #         self.position.x = position.x
+        #         self.position.y = position.y + 1
+        #     case 'down':
+        #         self.position.x = position.x
+        #         self.position.y = position.y - 1
+        #     case 'left':
+        #         self.position.y = position.y
+        #         self.position.x = position.x + 1
+        #     case 'right':
+        #         self.position.y = position.y
+        #         self.position.x = position.x - 1
+            
+
+    def collides_with_map(self, position: pg.Vector2):
+        if GameClient.instance.text_map is None or GameClient.instance.map is None:
+            return True, -1
+        
+        ppb = GameClient.instance.map.pixels_per_block
+        collision_box = pg.Rect(position.x - self.radius, position.y - self.radius, self.radius * 2, self.radius * 2)
+        map_top_left = GameClient.instance.map.rect.topleft
+
+        for y, row in enumerate(GameClient.instance.text_map):
+            for x, cell in enumerate(row):
+                if cell == ' ':
+                    continue
+
+                cell_rect = pg.Rect(x * ppb + map_top_left[0], y * ppb + map_top_left[1], ppb, ppb)
+                if collision_box.colliderect(cell_rect):
+                    return True, self.collision_direction(cell_rect, collision_box)
+        
+        return False, -1
+    
+    def collision_direction(self, a, b):
+        a_center_x = a.x + a.w / 2
+        a_center_y = a.y + a.h / 2
+        b_center_x = b.x + b.w / 2
+        b_center_y = b.y + b.h / 2
+
+        dx = b_center_x - a_center_x
+        dy = b_center_y - a_center_y
+
+        half_widths = (a.w + b.w) / 2
+        half_heights = (a.h + b.h) / 2
+
+        overlap_x = half_widths - abs(dx)
+        overlap_y = half_heights - abs(dy)
+
+        if overlap_x < overlap_y:
+            if dx > 0:
+                return "left" 
+            else:
+                return "right"
+        else:
+            if dy > 0:
+                return "up" 
+            else:
+                return "down"
 
     def update_direction(self):
         mx, my = pg.mouse.get_pos()
@@ -83,10 +157,16 @@ class Player:
         self.update_direction()
         self.interpolation = (time.time() - self.last_last_update) / (self.last_update - self.last_last_update)
     
+    def dead(self):
+        return self.hp <= 0
+
     def draw(self, screen):
-        self.draw_circle(screen)
-        self.draw_sight_line(screen)
-        self.draw_name(screen)
+        if not self.dead():
+            self.draw_circle(screen)
+            self.draw_sight_line(screen)
+            self.draw_name(screen)
+        elif self.main_player:
+            screen.blit(self.gameover, self.gameover.get_rect(center=(400, 300)))          
 
     def draw_sight_line(self, screen):
         if not self.interpolate:
@@ -163,16 +243,20 @@ class GameClient:
         self.clock = pg.time.Clock()
         self.client_id = name
         self.font = pg.font.Font('assets/Tiny5-Regular.ttf', 14)
+
         self.player = Player(pg.Vector2(0, 0), 0, self.client_id)
         self.player.position = pg.Vector2(self.w // 2, self.h // 2)
         self.player.interpolate = False
+        self.player.main_player = True
+
         self.debug_screen = DebugScreen(self.screen)
         self.debug_screen.set_value("FPS", 0)
         self.players = {}
         logger.info(f"Game client initialized. Whale cum, {self.client_id}!")
         self.bullets = Bullets()
         self.must_shoot = False
-        self.map_surface = pg.Surface((self.w, self.h))
+        self.map = None
+        self.text_map = None
 
     def run(self):
         self.running = True
@@ -209,37 +293,11 @@ class GameClient:
         else:
             logger.success("Joined the game successfully!")
         
-        self.map_surface = self.create_map_surface(response.map)
+        self.text_map = response.map.map
+        self.map = Map(response.map)
         logger.info("Created map surface.")
 
         return channel, stub
-
-    def create_map_surface(self, map_proto):
-        color_map = self.create_color_map(map_proto.color_map)
-        map_array = map_proto.map
-        width = max(map(len, map_array))
-        height = len(map_array)
-
-        pixels_per_block = min(self.w // width, self.h // height)
-        surface = pg.Surface((pixels_per_block * width, pixels_per_block * height))
-
-        for y in range(height):
-            for x in range(width):
-                current_value = map_array[y][x]
-                color = (255, 255, 255)
-                if current_value:
-                    if current_value not in color_map:
-                        logger.error(f"Unknown color entry: {current_value}")
-                    color = color_map[current_value]
-                pg.draw.rect(
-                    surface, color_map[current_value],
-                    (pixels_per_block * x, pixels_per_block * y, pixels_per_block, pixels_per_block)
-                )
-
-
-    def create_color_map(self, raw_color_map):
-        color_map = {entry.identifier: (entry.color.r, entry.color.g, entry.color.b) for entry in raw_color_map}
-        return color_map
 
     def network_loop(self):
         channel_stub = self.connect()
@@ -268,8 +326,15 @@ class GameClient:
         channel.close()
     
     def process_player_states(self, player_states):
+        current_ids = set(self.players.keys())
+        incoming_ids = set(state.client_id for state in player_states if state.client_id != self.client_id)
+
+        for removed_id in current_ids - incoming_ids:
+            del self.players[removed_id]
+
         for state in player_states:
             if state.client_id == self.client_id:
+                self.player.hp = state.hp
                 continue
              
             if state.client_id not in self.players:
@@ -277,6 +342,7 @@ class GameClient:
             else:
                 player = self.players[state.client_id]
                 player.update_pos_and_dir(pg.Vector2(state.position.x, state.position.y), state.direction)
+                player.hp = state.hp
 
     def draw_players(self):
         for player in self.players.values():
@@ -295,7 +361,7 @@ class GameClient:
                 logger.info("Quitting...")
                 self.quit_main_loop()
             if event.type == pg.MOUSEBUTTONDOWN:
-                if event.button == 1:
+                if event.button == 1 and not self.player.dead():
                     self.must_shoot = True
 
     def update(self):
@@ -307,11 +373,14 @@ class GameClient:
         except OverflowError:
             self.debug_screen.set_value("FPS", "NaN")
 
-        self.debug_screen.set_value("Position", f"({self.player.position.x:.2f}, {self.player.position.y:.2f})")
-        self.debug_screen.set_value("Direction", f"{math.degrees(self.player.direction):.2f}°")
+        # self.debug_screen.set_value("Position", f"({self.player.position.x:.2f}, {self.player.position.y:.2f})")
+        # self.debug_screen.set_value("Direction", f"{math.degrees(self.player.direction):.2f}°")
+        self.debug_screen.set_value("HP", self.player.hp)
     
     def render(self):
         self.screen.fill((0, 0, 0))
+        if self.map is not None:
+            self.screen.blit(self.map.surface, self.map.surface.get_rect(center=(self.w / 2, self.h / 2)))
         self.draw_players()
         self.debug_screen.draw()
         self.bullets.draw(self.screen)

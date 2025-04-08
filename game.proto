@@ -5,6 +5,7 @@ service Game {
     rpc Leave(LeaveRequest) returns (LeaveResponse);
     rpc Update(UpdateRequest) returns (UpdateResponse);
     rpc Shoot(ShootRequest) returns (ShootResponse);
+    rpc GetMap(GetMapRequest) returns (Map);
 }
 
 message JoinRequest {
@@ -41,6 +42,7 @@ message PlayerState {
     string client_id = 1;
     Vec2 position = 2;
     float direction = 3;
+    int32 hp = 4;
 }
 
 message Bullet {
@@ -64,9 +66,9 @@ message ShootResponse {
 }
 
 message Color {
-    int8 r = 1;
-    int8 g = 2;
-    int8 b = 3;
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
 }
 
 message ColorMapEntry {
@@ -77,4 +79,8 @@ message ColorMapEntry {
 message Map {
     repeated ColorMapEntry color_map = 1;
     repeated string map = 2;
+}
+
+message GetMapRequest {
+
 }

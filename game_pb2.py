@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ngame.proto\" \n\x0bJoinRequest\x12\x11\n\tplayer_id\x18\x01 \x01(\t\"0\n\x0cJoinResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"!\n\x0cLeaveRequest\x12\x11\n\tplayer_id\x18\x01 \x01(\t\"1\n\rLeaveResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"N\n\rUpdateRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x17\n\x08position\x18\x02 \x01(\x0b\x32\x05.Vec2\x12\x11\n\tdirection\x18\x03 \x01(\x02\"\x1c\n\x04Vec2\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\"L\n\x0bPlayerState\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x17\n\x08position\x18\x02 \x01(\x0b\x32\x05.Vec2\x12\x11\n\tdirection\x18\x03 \x01(\x02\"`\n\x06\x42ullet\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x11\n\tbullet_id\x18\x02 \x01(\x05\x12\x17\n\x08position\x18\x03 \x01(\x0b\x32\x05.Vec2\x12\x18\n\tdirection\x18\x04 \x01(\x0b\x32\x05.Vec2\"H\n\x0eUpdateResponse\x12\x1c\n\x06states\x18\x01 \x03(\x0b\x32\x0c.PlayerState\x12\x18\n\x07\x62ullets\x18\x02 \x03(\x0b\x32\x07.Bullet\"!\n\x0cShootRequest\x12\x11\n\tplayer_id\x18\x01 \x01(\t\" \n\rShootResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\xa6\x01\n\x04Game\x12#\n\x04Join\x12\x0c.JoinRequest\x1a\r.JoinResponse\x12&\n\x05Leave\x12\r.LeaveRequest\x1a\x0e.LeaveResponse\x12)\n\x06Update\x12\x0e.UpdateRequest\x1a\x0f.UpdateResponse\x12&\n\x05Shoot\x12\r.ShootRequest\x1a\x0e.ShootResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ngame.proto\" \n\x0bJoinRequest\x12\x11\n\tplayer_id\x18\x01 \x01(\t\"C\n\x0cJoinResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x11\n\x03map\x18\x03 \x01(\x0b\x32\x04.Map\"!\n\x0cLeaveRequest\x12\x11\n\tplayer_id\x18\x01 \x01(\t\"1\n\rLeaveResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"N\n\rUpdateRequest\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x17\n\x08position\x18\x02 \x01(\x0b\x32\x05.Vec2\x12\x11\n\tdirection\x18\x03 \x01(\x02\"\x1c\n\x04Vec2\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\"X\n\x0bPlayerState\x12\x11\n\tclient_id\x18\x01 \x01(\t\x12\x17\n\x08position\x18\x02 \x01(\x0b\x32\x05.Vec2\x12\x11\n\tdirection\x18\x03 \x01(\x02\x12\n\n\x02hp\x18\x04 \x01(\x05\"`\n\x06\x42ullet\x12\x10\n\x08owner_id\x18\x01 \x01(\t\x12\x11\n\tbullet_id\x18\x02 \x01(\x05\x12\x17\n\x08position\x18\x03 \x01(\x0b\x32\x05.Vec2\x12\x18\n\tdirection\x18\x04 \x01(\x0b\x32\x05.Vec2\"H\n\x0eUpdateResponse\x12\x1c\n\x06states\x18\x01 \x03(\x0b\x32\x0c.PlayerState\x12\x18\n\x07\x62ullets\x18\x02 \x03(\x0b\x32\x07.Bullet\"!\n\x0cShootRequest\x12\x11\n\tplayer_id\x18\x01 \x01(\t\" \n\rShootResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"(\n\x05\x43olor\x12\t\n\x01r\x18\x01 \x01(\r\x12\t\n\x01g\x18\x02 \x01(\r\x12\t\n\x01\x62\x18\x03 \x01(\r\":\n\rColorMapEntry\x12\x15\n\x05\x63olor\x18\x01 \x01(\x0b\x32\x06.Color\x12\x12\n\nidentifier\x18\x02 \x01(\t\"5\n\x03Map\x12!\n\tcolor_map\x18\x01 \x03(\x0b\x32\x0e.ColorMapEntry\x12\x0b\n\x03map\x18\x02 \x03(\t\"\x0f\n\rGetMapRequest2\xc6\x01\n\x04Game\x12#\n\x04Join\x12\x0c.JoinRequest\x1a\r.JoinResponse\x12&\n\x05Leave\x12\r.LeaveRequest\x1a\x0e.LeaveResponse\x12)\n\x06Update\x12\x0e.UpdateRequest\x1a\x0f.UpdateResponse\x12&\n\x05Shoot\x12\r.ShootRequest\x1a\x0e.ShootResponse\x12\x1e\n\x06GetMap\x12\x0e.GetMapRequest\x1a\x04.Mapb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,25 +34,33 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_JOINREQUEST']._serialized_start=14
   _globals['_JOINREQUEST']._serialized_end=46
   _globals['_JOINRESPONSE']._serialized_start=48
-  _globals['_JOINRESPONSE']._serialized_end=96
-  _globals['_LEAVEREQUEST']._serialized_start=98
-  _globals['_LEAVEREQUEST']._serialized_end=131
-  _globals['_LEAVERESPONSE']._serialized_start=133
-  _globals['_LEAVERESPONSE']._serialized_end=182
-  _globals['_UPDATEREQUEST']._serialized_start=184
-  _globals['_UPDATEREQUEST']._serialized_end=262
-  _globals['_VEC2']._serialized_start=264
-  _globals['_VEC2']._serialized_end=292
-  _globals['_PLAYERSTATE']._serialized_start=294
-  _globals['_PLAYERSTATE']._serialized_end=370
-  _globals['_BULLET']._serialized_start=372
-  _globals['_BULLET']._serialized_end=468
-  _globals['_UPDATERESPONSE']._serialized_start=470
-  _globals['_UPDATERESPONSE']._serialized_end=542
-  _globals['_SHOOTREQUEST']._serialized_start=544
-  _globals['_SHOOTREQUEST']._serialized_end=577
-  _globals['_SHOOTRESPONSE']._serialized_start=579
-  _globals['_SHOOTRESPONSE']._serialized_end=611
-  _globals['_GAME']._serialized_start=614
-  _globals['_GAME']._serialized_end=780
+  _globals['_JOINRESPONSE']._serialized_end=115
+  _globals['_LEAVEREQUEST']._serialized_start=117
+  _globals['_LEAVEREQUEST']._serialized_end=150
+  _globals['_LEAVERESPONSE']._serialized_start=152
+  _globals['_LEAVERESPONSE']._serialized_end=201
+  _globals['_UPDATEREQUEST']._serialized_start=203
+  _globals['_UPDATEREQUEST']._serialized_end=281
+  _globals['_VEC2']._serialized_start=283
+  _globals['_VEC2']._serialized_end=311
+  _globals['_PLAYERSTATE']._serialized_start=313
+  _globals['_PLAYERSTATE']._serialized_end=401
+  _globals['_BULLET']._serialized_start=403
+  _globals['_BULLET']._serialized_end=499
+  _globals['_UPDATERESPONSE']._serialized_start=501
+  _globals['_UPDATERESPONSE']._serialized_end=573
+  _globals['_SHOOTREQUEST']._serialized_start=575
+  _globals['_SHOOTREQUEST']._serialized_end=608
+  _globals['_SHOOTRESPONSE']._serialized_start=610
+  _globals['_SHOOTRESPONSE']._serialized_end=642
+  _globals['_COLOR']._serialized_start=644
+  _globals['_COLOR']._serialized_end=684
+  _globals['_COLORMAPENTRY']._serialized_start=686
+  _globals['_COLORMAPENTRY']._serialized_end=744
+  _globals['_MAP']._serialized_start=746
+  _globals['_MAP']._serialized_end=799
+  _globals['_GETMAPREQUEST']._serialized_start=801
+  _globals['_GETMAPREQUEST']._serialized_end=816
+  _globals['_GAME']._serialized_start=819
+  _globals['_GAME']._serialized_end=1017
 # @@protoc_insertion_point(module_scope)
